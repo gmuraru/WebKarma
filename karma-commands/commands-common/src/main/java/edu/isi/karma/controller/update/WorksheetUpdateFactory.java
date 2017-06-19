@@ -67,6 +67,7 @@ public class WorksheetUpdateFactory {
 			UpdateContainer c, SuperSelection sel) {
 		c.add(new WorksheetHeadersUpdate(worksheetId, sel));
 		c.add(new WorksheetDataUpdate(worksheetId, sel));
+		System.out.println(sel);
 		c.add(new WorksheetSuperSelectionListUpdate(worksheetId));
 	}
 	public static UpdateContainer createRegenerateWorksheetUpdates(String worksheetId, SuperSelection sel, String contextId) {
