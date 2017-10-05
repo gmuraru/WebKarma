@@ -328,6 +328,7 @@ public class GraphBuilderTopK extends GraphBuilder {
 
 
 		/** Check if any ontology needs to be preloaded **/
+		logger.error("sdadsadadasdasdadasda");
 		String preloadedOntDir = "/Users/mohsen/karma/preloaded-ontologies/";
 		File ontDir = new File(preloadedOntDir);
 		OntologyManager mgr = null;

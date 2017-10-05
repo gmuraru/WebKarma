@@ -1088,6 +1088,8 @@ public class ModelLearner_KnownModels {
 		}
 		
 		OntologyManager ontologyManager = new OntologyManager(contextParameters.getId());
+		logger.error("CE plmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm");
+		logger.error(karmaHomeDir);
 		File ff = new File(karmaHomeDir + "preloaded-ontologies/");
 		File[] files = ff.listFiles();
 		for (File f : files) {

@@ -55,6 +55,15 @@
 							<h4>Select Distance Metric:</h4>
 							<div class="radio">
 								<label>
+									<input type="radio" name="stringMetrics" value="jaro" id="selectMetrics">
+										<span>Jaro</span>
+									</input>
+								</label>
+							</div>
+
+
+							<div class="radio">
+								<label>
 									<input type="radio" name="stringMetrics" value="jaro-winkler" id="selectMetrics">
 										<span>Jaro-Winkler</span>
 									</input>
@@ -64,6 +73,27 @@
 								<label>
 									<input type="radio" name="stringMetrics" value="levenshtein" id="selectMetrics">
 										<span>Levenshtein</span>
+									</input>
+								</label>
+							</div>
+							<div class="radio">
+								<label>
+									<input type="radio" name="stringMetrics" value="damerau-levenshtein" id="selectMetrics">
+										<span>Damerau-Levenshtein</span>
+									</input>
+								</label>
+							</div>
+							<div class="radio">
+								<label>
+									<input type="radio" name="stringMetrics" value="jaccard" id="selectMetrics">
+										<span>Jaccard</span>
+									</input>
+								</label>
+							</div>
+							<div class="radio">
+								<label>
+									<input type="radio" name="stringMetrics" value="cosine" id="selectMetrics">
+										<span>Cosine Similiarity</span>
 									</input>
 								</label>
 							</div>

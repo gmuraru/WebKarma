@@ -1643,7 +1643,6 @@ var UnfoldDialog = (function() {
 		var worksheetId, columnId;
 
 		function init() {
-			alert("salut");
 			//Initialize handler for Save button
 			//var me = this;
 			$('#btnSave', dialog).on('click', function(e) {
@@ -1664,9 +1663,7 @@ var UnfoldDialog = (function() {
 			console.log("Save clicked");
 
 			var checkboxes = dialog.find(":checked");
-			alert("nu e bine");
 			if (checkboxes.length == 0) {
-				alert("Gol");
 				hide();
 				return;
 			}

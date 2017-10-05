@@ -249,7 +249,6 @@ public class HybridSTModelHandler implements ISemanticTypeModelHandler {
 	public List<SemanticTypeLabel> predictType(List<String> examples,
 			int numPredictions) {
 
-		logger.warn("George - Predict Type");
 		if (!this.modelEnabled) {
 			logger.warn("Semantic Type Modeling is not enabled");
 			return null;

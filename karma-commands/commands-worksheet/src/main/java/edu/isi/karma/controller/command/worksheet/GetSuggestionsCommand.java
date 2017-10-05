@@ -166,73 +166,6 @@ public class GetSuggestionsCommand extends WorksheetSelectionCommand {
 	}
 
 
-	/*
-	@Override
-	public UpdateContainer doIt(Workspace workspace) {
-		inputColumns.clear();
-		outputColumns.clear();
-		Worksheet worksheet = workspace.getWorksheet(worksheetId);
-
-		inputColumns.add(hNodeId);
-		outputColumns.add(hNodeId);
-
-		UpdateContainer uc = new UpdateContainer(new InfoUpdate("Get Suggestions"));
-		try {
-			populateColumnWithSuggestedValue(worksheet, workspace.getFactory());
-		} catch (CommandException e) {
-			logger.error("Error in GetSuggestionsCommand - similarity" + e.toString());
-			Util.logException(logger, e);
-			return new UpdateContainer(new ErrorUpdate(e.getMessage()));
-		}
-
-		for (ICommand comm: editedHNodeIds) {
-			try {
-				uc.append(comm.doIt(workspace));
-			} catch (CommandException e) {
-				logger.error("Error in GetSuggestionsCommand" + e.toString());
-				Util.logException(logger, e);
-				return new UpdateContainer(new ErrorUpdate(e.getMessage()));
-			}
-		}
-
-		return uc;
-	}
-
-	private void populateColumnWithSuggestedValue(Worksheet worksheet, RepFactory factory) throws CommandException {
-		final HashMap<String, Integer> occurrences = new HashMap<String, Integer>();
-		SuperSelection selection = getSuperSelection(worksheet);
-		List<HNodePath> columnPaths = worksheet.getHeaders().getAllPaths();
-		HNodePath selectedPath = null;
-
-		for (HNodePath path : columnPaths) {
-			if (path.getLeaf().getId().equals(hNodeId)) {
-				selectedPath = path;
-			}
-		}
-
-		Collection<Node> nodes = new ArrayList<>(Math.max(1000, worksheet.getDataTable().getNumRows()));
-		worksheet.getDataTable().collectNodes(selectedPath, nodes, selection);
-
-		for (Node node : nodes) {
-			String nodeVal = node.getValue().asString();
-			if (nodeVal.length() != 0) {
-				Integer oldNr = occurrences.get(nodeVal);
-				occurrences.put(nodeVal, oldNr == null ? 1 : oldNr + 1);
-			}
-		}
-
-		final Map<String, String> maybeMistaken = getSuggestions(occurrences);
-
-		for (Node node : nodes) {
-			String nodeVal = node.getValue().asString();
-			if (maybeMistaken.containsKey(nodeVal)) {
-				editedHNodeIds.add(new EditCellCommand(id, model, worksheetId,
-							node.getId(), maybeMistaken.get(nodeVal), selectionId));
-			}
-		}
-	}
-	*/
-
 	@Override
 	public UpdateContainer undoIt(Workspace workspace) {
 		Worksheet worksheet = workspace.getWorksheet(worksheetId);
@@ -290,7 +223,15 @@ public class GetSuggestionsCommand extends WorksheetSelectionCommand {
 				if (distance.equals("jaro-winkler")) {
 					sim = similarity_jw(s1, s2);
 				} else if (distance.equals("levenshtein")) {
-					sim = similary_lev(s1, s2);
+					sim = similarity_lev(s1, s2);
+				} else if (distance.equals("damerau-levenshtein")) {
+					sim = similarity_dam_lev(s1, s2);
+				} else if (distance.equals("jaro")) {
+					sim = similarity_j(s1, s2);
+				} else if (distance.equals("cosine")) {
+					sim = similarity_cosine(s1, s2);
+				} else if (distance.equals("jaccard")) {
+					sim = similarity_jac(s1, s2);
 				} else {
 					throw new CommandException(this, "Distance metric not known " + distance);
 				}
@@ -325,9 +266,7 @@ public class GetSuggestionsCommand extends WorksheetSelectionCommand {
 		return prefix;
 	}
 
-
-	private Double similarity_jw(String s1, String s2) {
-		final Double threshold_jw = 0.1;
+	private Double similarity_j(String s1, String s2) {
 		final Integer n1 = s1.length();
 		final Integer n2 = s2.length();
 
@@ -365,14 +304,94 @@ public class GetSuggestionsCommand extends WorksheetSelectionCommand {
 			((double) nr_match / n2) +
 			(((double) nr_match - trans / 2.0) / nr_match)) / 3.0;
 
+		return 1 - jaro;
+	}
+
+
+
+	/* Jaro-Winkler similarity */
+	private Double similarity_jw(String s1, String s2) {
+		final Double threshold_jw = 0.1;
+		
+		final Double jaro = similarity_j(s1, s2);
 		final Integer prefix = getPrefix(s1, s2);
-		final Double jaro_winkler = jaro + prefix * threshold_jw * (1 - jaro);
+		final Double jaro_winkler = (-jaro + 1) + prefix * threshold_jw * jaro;
 
 		return 1.0 - jaro_winkler;
 	}
 
+	/* Jaccard index */
+	public Double similarity_jac(String s1, String s2) {
+		Set<Character> set1 = new HashSet<>();
+		Set<Character> set2 = new HashSet<>();
+		Set<Character> union = new HashSet<>();
 
-	private Double similary_lev(String s1, String s2) {
+		for (int i = 0; i < s1.length(); i++) {
+			char c = s1.charAt(i);
+			set1.add(c);
+			union.add(c);
+		}
+
+		for (int i = 0; i < s2.length(); i++) {
+			char c = s2.charAt(i);
+			set2.add(c);
+			union.add(c);
+		}
+		
+		Set<Character> intersection = new HashSet<>(set1);
+		intersection.retainAll(set2);
+
+		return 1 - (double) intersection.size() / (double) union.size();
+	}
+	
+	
+	/* Cosine Similarity */
+	private Double similarity_cosine(String s1, String s2) {
+		Map<Character, Integer> s1_chars = new HashMap<>();
+		Map<Character, Integer> s2_chars = new HashMap<>();
+		Set<Character> union_chars = new HashSet<>();
+
+		for (int i = 0; i < s1.length(); i++) {
+			char c = s1.charAt(i);
+			union_chars.add(c);
+			Integer old_value = s1_chars.get(c);
+			s1_chars.put(c, old_value == null ? 1 : 1 + old_value);
+		}
+
+		for (int i = 0; i < s2.length(); i++) {
+			char c = s2.charAt(i);
+			union_chars.add(c);
+			Integer old_value = s2_chars.get(c);
+			s2_chars.put(c, old_value == null ? 1 : 1 + old_value);
+		}
+
+		Double frac_up;
+		Double frac_down1, frac_down2;
+
+		frac_up = frac_down1 = frac_down2 = 0.0;
+
+		for (char c: union_chars) {
+			Integer val1 = s1_chars.get(c);
+			Integer val2 = s2_chars.get(c);
+	
+			if (val1 != null && val2 != null) {
+				frac_up += val1 * val2;
+			}
+
+			if (val1 != null) {
+				frac_down1 += val1;
+			}
+
+			if (val2 != null) {
+				frac_down2 += val2;
+			}
+		}
+		
+		return 1 - frac_up / Math.sqrt(frac_down1 * frac_down2);
+	}
+
+	/* Levenshtein Distance */
+	private Double similarity_lev(String s1, String s2) {
 		int[][] dist = new int[s1.length() + 1][s2.length() + 1];
 
 		for (int i = 0; i <= s1.length(); i++)
@@ -394,4 +413,32 @@ public class GetSuggestionsCommand extends WorksheetSelectionCommand {
 		return (double) dist[s1.length()][s2.length()];
 
 	}
+
+	/* Damerau - Levenshtein Distance */
+	private Double similarity_dam_lev(String s1, String s2) {
+		int[][] dist = new int[s1.length() + 1][s2.length() + 1];
+
+		for (int i = 0; i <= s1.length(); i++)
+			dist[i][0] = i;
+		for (int i = 1; i <= s2.length(); i++)
+			dist[0][i] = i;
+
+		for (int i = 1; i <= s1.length(); i++) {
+			for (int j = 1; j <= s2.length(); j++) {
+				Integer cost = 0;
+				if (s1.charAt(i-1) != s2.charAt(j-1)) {
+					cost = 1;
+				}
+
+				dist[i][j] = Math.min(dist[i - 1][j] + 1, Math.min(dist[i][j - 1] + 1, dist[i - 1][j - 1] + cost));
+
+				if (i > 1 && j > 1 && s1.charAt(i-2) == s2.charAt(j - 1) && s1.charAt(i-1) == s2.charAt(j-2)) {
+					dist[i][j] = Math.min(dist[i][j], dist[i-2][j-2] + 1);
+				}
+			}
+		}
+
+		return (double) dist[s1.length()][s2.length()];
+	}
+	
 }

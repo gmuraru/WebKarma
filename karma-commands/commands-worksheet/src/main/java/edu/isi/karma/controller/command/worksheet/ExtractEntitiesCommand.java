@@ -143,7 +143,7 @@ public class ExtractEntitiesCommand extends WorksheetSelectionCommand {
 		List<Table> tables = new ArrayList<>();
 		
 		CloneTableUtils.getDatatable(worksheet.getDataTable(), ht, tables, selection);
-		for(Table table : tables) {
+		for (Table table : tables) {
 			ArrayList<Row> rows = table.getRows(0, table.getNumRows(), selection);
 		
 				for (Row row : rows) {
